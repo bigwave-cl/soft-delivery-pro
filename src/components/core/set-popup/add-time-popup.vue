@@ -1,10 +1,12 @@
 <style lang="scss">
 	@import '~@/styles/mixins', '~@/styles/variables';
-	.add-time-popup.ask-modal{
-		width: 550px;
-		padding: 0;
-		border-radius: 8px;
-		overflow: hidden;
+	.add-time-popup.ask-modal-box{
+		.ask-modal-wrapper{
+			width: 550px;
+			padding: 0;
+			border-radius: 8px;
+			overflow: hidden;
+		}
 		.ask-modal-header{
 			padding: 8px 40px;
 			background-color: map-get($color,500);
@@ -13,12 +15,14 @@
 				font-size: 1.8rem;
 			}
 			.ask-close-icon{
-				right: 34px;
-				&::before, &::after{
-					background-color: rgba(map-get($color,200),.5);
-				}
-				&:hover{
-					&::before, &::after{
+				right: 8px;
+				.icon{
+					&::after,
+					&::before{
+						background-color: rgba(map-get($color,200),.5);
+					}
+					&:hover::after,
+					&:hover::before{
 						background-color: rgba(map-get($color,200),1);
 					}
 				}
@@ -91,12 +95,13 @@
 	}
 </style>
 <template>
-	<ask-modal  :show="show" 
-				:title="title"
-				@onclose="iconClose"
-				:closeBtn ="true"
-				:transition="'soft-pro-modal'"
-				class="add-time-popup">
+	<ask-modal 
+		:title="title" 
+		:show.sync="show"
+		:beforeClose="beforeClose"
+		:showFooter="false"
+		class="add-time-popup"
+		>
 		<div class="soft-pro-box">
 			<form @submit.prevent="saveTime" >
 				<div class="group-out">
@@ -112,11 +117,11 @@
 					</div>
 					<div class="group">
 						<label>开始时间</label>
-						<input-time :time="model.start" @select="startChange"></input-time>
+						<input-time :time="model.start" :max="model.end" @select="startChange"></input-time>
 					</div>
 					<div class="group">
 						<label>结束时间</label>
-						<input-time :time="model.end" @select="endChange"></input-time>
+						<input-time :time="model.end" :min="['now',model.start]" @select="endChange"></input-time>
 					</div>
 				</div>
 				<div class="button-group">
@@ -155,13 +160,13 @@ import { DeviceSet } from '@/services';
 				inlineLoaderShow: false,
 				model:{
 					name:'',
-					start:'2017-11-30 11:11:11',
-					end:'2017-11-23 11:11:11',
+					start:moment().subtract(1,"day").format("YYYY-MM-DD HH:mm:ss"),
+					end:moment().format("YYYY-MM-DD HH:mm:ss"),
 				}
 			}
 		},
 		methods:{
-			iconClose(){
+			beforeClose(){
 				if(this.inlineLoaderShow) return;
 				this.$emit('onclose');
 			},

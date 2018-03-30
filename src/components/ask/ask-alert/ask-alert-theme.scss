@@ -3,7 +3,7 @@ $successColor: #00e676 #fff rgba(105, 240, 174, .12) rgba(105, 240, 174, .24);
 $infoColor: #1de9b6 #fff rgba(100, 255, 218, .12) rgba(100, 255, 218, .24);
 $dangerColor: #ff4081 #fff rgba(255, 128, 171, .12) rgba(255, 128, 171, .24);
 @mixin askAlertTheme($theme) {
-	.ask-modal.ask-alert-theme-#{$theme} {
+	.ask-modal-box.ask-alert-theme-#{$theme} {
 		.ask-alert-btn {
 			@if $theme=='success' {
 				color: nth($successColor, 2);

@@ -9,8 +9,10 @@ const askOverlay = {
 	open(instance) {
 		/*检测实例是否有传递过来或者实例是否存在*/
 		if (!instance || this.instances.indexOf(instance) !== -1) return;
-		if (this.instances.length === 0) {
+		if (this.overlay == !1) {
 			this.creatOverlay(instance.shadeColor, instance.shade);
+		}else{
+			this.overlay.show = true;
 		}
 		this.instances.push(instance);
 		this.changeOverlayStyle(instance);
@@ -20,6 +22,7 @@ const askOverlay = {
 		if (self.instances.length === 0) return;
 		self.instances.map(index => {
 			index.close();
+			index.$el.remove&&index.$el.remove();
 			self.close(index);
 		})
 	},
@@ -74,7 +77,7 @@ const askOverlay = {
 		document.body.style.height = this.bodyStyle.height;
 		document.body.style.overflow = this.bodyStyle.overflow;
 		this.overlay.show = false;
-		this.overlay = null;
+		// this.overlay = null;
 	},
 	changeOverlayStyle(instance) {
 		if (!this.overlay || this.instances.length === 0) return;

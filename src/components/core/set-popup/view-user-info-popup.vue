@@ -1,11 +1,19 @@
 <style lang="scss">
 	@import '~@/styles/mixins', '~@/styles/variables';
-	.view-user-info-popup.ask-modal{
-		max-width: 800px;
-		width: 70%;
-		padding: 0;
-		border-radius: 8px;
-		overflow: hidden;
+	.view-user-info-popup.ask-modal-box{
+		.ask-modal-wrapper{
+			max-width: 800px;
+			min-width: 550px;
+			width: 70%;
+			padding: 0;
+			border-radius: 8px;
+			overflow: hidden;
+		}
+		&.not-pro{
+			.ask-modal-wrapper{
+				width: 60%;
+			}
+		}
 		.ask-modal-header{
 			padding: 8px 40px;
 			background-color: map-get($color,500);
@@ -14,12 +22,14 @@
 				font-size: 1.8rem;
 			}
 			.ask-close-icon{
-				right: 34px;
-				&::before, &::after{
-					background-color: rgba(map-get($color,200),.5);
-				}
-				&:hover{
-					&::before, &::after{
+				right: 8px;
+				.icon{
+					&::after,
+					&::before{
+						background-color: rgba(map-get($color,200),.5);
+					}
+					&:hover::after,
+					&:hover::before{
 						background-color: rgba(map-get($color,200),1);
 					}
 				}
@@ -50,6 +60,7 @@
 				}
 				.ask-col-35{
 					width: 35%;
+					flex: 1 0 auto;
 				}
 				.ask-col-20{
 					width: 20%;
@@ -58,7 +69,7 @@
 					padding-right: 8px;
 					background-color: map-get($color,700S1);
 					li{
-						color: ma-get($color,600D1);
+						color: map-get($color,600D1);
 						@include textEllipsis(1);
 						font-size: 1.8rem;
 					}
@@ -127,19 +138,21 @@
 	}
 </style>
 <template>
-	<ask-modal  :show="show" 
-				:title="title"
-				@onclose="iconClose"
-				@initmodal="initModal"
-				:closeBtn ="true"
-				:transition="'soft-pro-modal'"
-				class="view-user-info-popup">
+	<ask-modal 
+		:title="title" 
+		:show.sync="show"
+		:beforeClose="beforeClose"
+		@open="initModal"
+		:showFooter="false"
+		class="view-user-info-popup"
+		:class="{'not-pro': !$isPro}"
+		>
 		<div class="soft-pro-box">
 			<template v-if="!inlineLoaderShow || list.length > 0">
 				<ul class="ul-table caption">
 					<li class="ask-col-45">管理人名称</li>
 					<li class="ask-col-35">用户类型</li>
-					<li class="ask-col-20">操作</li>
+					<li class="ask-col-20" v-if="$isPro">操作</li>
 				</ul>
 				<div class="ul-table-body" @scroll="onScroll($event)">
 					<template v-if="list.length == 0"><div class="null-text">暂无相关数据</div></template>
@@ -147,7 +160,7 @@
 						<ul class="ul-table">
 							<li class="ask-col-45">{{once.username || '无'}}</li>
 							<li class="ask-col-35">{{once.group_name || '无'}}</li>
-							<li class="ask-col-20">
+							<li class="ask-col-20" v-if="$isPro">
 								<ask-button class="del" @ask-click="onDel(once)">解除</ask-button>
 							</li>
 						</ul>
@@ -190,7 +203,7 @@ import { DeviceSet } from '@/services';
 			}
 		},
 		methods:{
-			iconClose(){
+			beforeClose(){
 				this.$emit('onclose');
 			},
 			initModal(){
@@ -224,7 +237,7 @@ import { DeviceSet } from '@/services';
 			onDel(once){
 				askDialogConfirm({
 					title: '解除管理人',
-					msg: `确定解除${once.group_name}"${once.username}"？`
+					content: `确定解除${once.group_name}"${once.username}"？`
 				}, (vm) => {
 				  	const deviceSetService = new DeviceSet();
 				  	deviceSetService.delUserInfo({

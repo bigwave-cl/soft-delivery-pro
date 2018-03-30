@@ -49,10 +49,10 @@ export const amountFormat = (num) => {
  */
 
 export const timeConvert = (difference) => {
-	let curDay = handlerSingleDigit(parseInt(difference / (1000 * 60 * 60 * 24),10)),
-		curHours = handlerSingleDigit(parseInt(difference / (1000 * 60 * 60) % 24,10)),
-		curMinutes = handlerSingleDigit(parseInt(difference / (1000 * 60) % 60,10)),
-		curSeconds = handlerSingleDigit(parseInt(difference / (1000) % 60,10));
+	let curDay = handlerSingleDigit(parseInt(difference / (1000 * 60 * 60 * 24), 10)),
+		curHours = handlerSingleDigit(parseInt(difference / (1000 * 60 * 60) % 24, 10)),
+		curMinutes = handlerSingleDigit(parseInt(difference / (1000 * 60) % 60, 10)),
+		curSeconds = handlerSingleDigit(parseInt(difference / (1000) % 60, 10));
 	return {
 		d: curDay,
 		h: curHours,
@@ -93,7 +93,7 @@ console.log('总共耗时')
 console.log(domTiming.domComplete - domTiming.domLoading)
 */
 
-/* istanbul ignore next */
+/* 检测是否存在某个类名 */
 export function hasClass(el, cls) {
 	if (!el || !cls) return false;
 	if (cls.indexOf(' ') !== -1) throw new Error('className should not contain space.');
@@ -104,7 +104,7 @@ export function hasClass(el, cls) {
 	}
 };
 
-/* istanbul ignore next */
+/* 添加类名 */
 export function addClass(el, cls) {
 	if (!el) return;
 	var curClass = el.className;
@@ -127,7 +127,7 @@ export function addClass(el, cls) {
 	}
 };
 
-/* istanbul ignore next */
+/* 删除类名 */
 export function removeClass(el, cls) {
 	if (!el || !cls) return;
 	var classes = cls.split(' ');
@@ -149,20 +149,145 @@ export function removeClass(el, cls) {
 		el.className = trim(curClass);
 	}
 };
-
+//高德地图初始化
 export const AMapLoad = (k) => {
-    return new Promise(function(resolve, reject) {
-        window.initTheMap = function() {
-            resolve(AMap);
-        }
+	return new Promise(function(resolve, reject) {
+		window.initTheMap = function() {
+			resolve(AMap);
+		}
 
-        var script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.async = true;
-        script.src = 'http://webapi.amap.com/maps?v=1.3&callback=initTheMap&key=' + k ;
-        script.onerror = function(e){
-            reject(e);
-        };
-        document.head.appendChild(script);
-    })
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.async = true;
+		script.src = 'http://webapi.amap.com/maps?v=1.3&callback=initTheMap&key=' + k;
+		script.onerror = function(e) {
+			reject(e);
+		};
+		document.head.appendChild(script);
+	})
 }
+//合并对象
+export const merge = (...arg) => {
+	if (arg.length == 0) {
+		throw Error(`merge error=>请传入需要合并的对象`);
+	}
+	let target = arg[0] || {},
+		depath = false,
+		length = arg.length,
+		i = 1;
+
+	if (Object.prototype.toString.call(target) == '[object Boolean]') {
+		depath = target;
+		target = arg[i];
+		i++
+	}
+
+	if (!isObject(target)) {
+		target = {};
+	}
+
+	if (i == 2 && length <= 1) {
+		throw Error(`merge error=>请传入需要合并的对象`);
+	}
+
+	for (; i < length; i++) {
+		let source = arg[i] || {};
+		if (source != null) {
+			for (let key in source) {
+				let src = target[key],
+					copy = source[key];
+				if (target === copy) {
+					continue;
+				}
+				if (Object.prototype.hasOwnProperty.call(source, key)) {
+					if (copy !== void 0) {
+						if (depath && copy && (isObject(copy) || Array.isArray(copy))) {
+							let clone;
+							if (Array.isArray(copy)) {
+								clone = src && Array.isArray(src) ? src : [];
+							} else {
+								clone = src && isObject(src) ? src : {};
+							}
+							target[key] = merge(depath, clone, copy);
+						} else {
+							target[key] = copy;
+						}
+					}
+				}
+			}
+		}
+	}
+	return target;
+}
+
+export const isObject = (target) => {
+	return Object.prototype.toString.call(target) === '[object Object]';
+}
+
+export const trim = (payload) => {
+	return payload == null ? "" : (payload + "").replace(/^[\s\uFEFF]+|[\s\uFEFF]+$/g, '');
+}
+
+export const WGS2GCJ = function(lat, lon) {
+	//
+	// Krasovsky 1940
+	//
+	// a = 6378245.0, 1/f = 298.3
+	// b = a * (1 - f)
+	// ee = (a^2 - b^2) / a^2;
+	let _a = 6378245.0;
+	let _ee = 0.00669342162296594323;
+	let _pi = 3.14159265358979323;
+
+	// World Geodetic System ==> Mars Geodetic System
+	let _transform = function(wgLat, wgLon) {
+		let mgLat, mgLon;
+
+		if (_outOfChina(wgLat, wgLon)) {
+			mgLat = wgLat;
+			mgLon = wgLon;
+			return [mgLat, mgLon];
+		}
+		let dLat = _transformLat(wgLon - 105.0, wgLat - 35.0);
+		let dLon = _transformLon(wgLon - 105.0, wgLat - 35.0);
+		let radLat = wgLat / 180.0 * _pi;
+		let magic = Math.sin(radLat);
+		magic = 1 - _ee * magic * magic;
+		let sqrtMagic = Math.sqrt(magic);
+		dLat = (dLat * 180.0) / ((_a * (1 - _ee)) / (magic * sqrtMagic) * _pi);
+		dLon = (dLon * 180.0) / (_a / sqrtMagic * Math.cos(radLat) * _pi);
+		mgLat = wgLat + dLat;
+		mgLon = wgLon + dLon;
+
+		return [mgLat, mgLon];
+	}
+
+	let _outOfChina = function(lat, lon) {
+		if (lon < 72.004 || lon > 137.8347)
+			return true;
+		if (lat < 0.8293 || lat > 55.8271)
+			return true;
+		return false;
+	}
+
+	let _transformLat = function(x, y) {
+		let ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));
+		ret += (20.0 * Math.sin(6.0 * x * _pi) + 20.0 * Math.sin(2.0 * x * _pi)) * 2.0 / 3.0;
+		ret += (20.0 * Math.sin(y * _pi) + 40.0 * Math.sin(y / 3.0 * _pi)) * 2.0 / 3.0;
+		ret += (160.0 * Math.sin(y / 12.0 * _pi) + 320 * Math.sin(y * _pi / 30.0)) * 2.0 / 3.0;
+		return ret;
+	}
+
+	let _transformLon = function(x, y) {
+		let ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));
+		ret += (20.0 * Math.sin(6.0 * x * _pi) + 20.0 * Math.sin(2.0 * x * _pi)) * 2.0 / 3.0;
+		ret += (20.0 * Math.sin(x * _pi) + 40.0 * Math.sin(x / 3.0 * _pi)) * 2.0 / 3.0;
+		ret += (150.0 * Math.sin(x / 12.0 * _pi) + 300.0 * Math.sin(x / 30.0 * _pi)) * 2.0 / 3.0;
+		return ret;
+	}
+
+	lat = Number(lat);
+	lon = Number(lon);
+	// var z = _transform(lat, lon);
+	return { 'lat': lat, 'lng': lon - 0.0005 };
+};

@@ -1,11 +1,12 @@
 <style lang="scss">
 	@import '~@/styles/mixins', '~@/styles/variables';
-	.view-box-list-popup.ask-modal{
-		max-width: 550px;
-		width: 70%;
-		padding: 0;
-		border-radius: 8px;
-		overflow: hidden;
+	.view-box-list-popup.ask-modal-box{
+		.ask-modal-wrapper{
+			width: 550px;
+			padding: 0;
+			border-radius: 8px;
+			overflow: hidden;
+		}
 		.ask-modal-header{
 			padding: 8px 40px;
 			background-color: map-get($color,500);
@@ -14,12 +15,14 @@
 				font-size: 1.8rem;
 			}
 			.ask-close-icon{
-				right: 34px;
-				&::before, &::after{
-					background-color: rgba(map-get($color,200),.5);
-				}
-				&:hover{
-					&::before, &::after{
+				right: 8px;
+				.icon{
+					&::after,
+					&::before{
+						background-color: rgba(map-get($color,200),.5);
+					}
+					&:hover::after,
+					&:hover::before{
 						background-color: rgba(map-get($color,200),1);
 					}
 				}
@@ -52,7 +55,7 @@
 					padding-right: 8px;
 					background-color: map-get($color,700S1);
 					li{
-						color: ma-get($color,600D1);
+						color: map-get($color,600D1);
 						@include textEllipsis(1);
 						font-size: 1.8rem;
 					}
@@ -121,13 +124,14 @@
 	}
 </style>
 <template>
-	<ask-modal  :show="show" 
-				:title="title"
-				@onclose="iconClose"
-				@initmodal="initModal"
-				:closeBtn ="true"
-				:transition="'soft-pro-modal'"
-				class="view-box-list-popup">
+	<ask-modal 
+		:title="title" 
+		:show.sync="show"
+		:beforeClose="beforeClose"
+		@open="initModal"
+		:showFooter="false"
+		class="view-box-list-popup"
+		>
 		<div class="soft-pro-box">
 			<template v-if="!inlineLoaderShow || list.length > 0">
 				<ul class="ul-table caption">
@@ -151,7 +155,7 @@
 </template>
 <script>
 import inlineLoader from '../inline-loader/inline-loader.vue';
-import { askDialogConfirm,askDialogToast } from '@/utils';
+import { askDialogToast } from '@/utils';
 import { DeviceSet } from '@/services';
 	export default{
 		name:"ViewTImePopup",
@@ -178,7 +182,7 @@ import { DeviceSet } from '@/services';
 			}
 		},
 		methods:{
-			iconClose(){
+			beforeClose(){
 				this.$emit('onclose');
 			},
 			initModal(){

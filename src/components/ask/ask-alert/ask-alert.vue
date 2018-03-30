@@ -1,14 +1,18 @@
 <template>
-	<ask-modal  :show="show" 
-				:title="title" 
-				:closeIcon="icon" 
-				:closeBtn="closeBtn"
-				:shade="shade"
-				:shadeColor="shadeColor"
-				:shadeClick="shadeClick"
-				:class="theme"
-				@onclose="iconClose">
-		<div class="ask-alert-box" v-if="message" v-html="message">
+	<ask-modal 
+		:title="title" 
+		:show.sync="show"
+		:shade="shade"
+		:shadeColor="shadeColor"
+		:shadeClick="shadeClick"
+		@open="open"
+		:beforeClose="beforeClose"
+		:afterClose="afterClose"
+		:class="theme"
+		:showClose="showClose"
+		>
+		<div class="ask-alert-box" v-if="content" v-html="content">
+		    
 		</div>
 	    <ask-button slot="footer" class="ask-alert-btn" @ask-click="sure" :disabled="okLoader">
 	    	{{btnText}}
@@ -40,7 +44,7 @@
 				type:Boolean,
 				default:false
 			},
-			message: {
+			content: {
 				type:String,
 				default:''
 			},
@@ -48,17 +52,13 @@
 				type:String,
 				default:''
 			},
-			icon: {
+			showClose: {
 				type: Boolean,
-				default:false
+				default: true 
 			},
 			btnText:{
 				type: String,
 				default:'确定'
-			},
-			closeBtn:{
-				type:Boolean,
-				default:false
 			},
 			theme:[]
 		},
@@ -68,6 +68,7 @@
 			}
 		},
 		methods:{
+			open(){},
 			sure(){
 				this.okLoader = true;
 				this.$emit('onok');
@@ -75,9 +76,15 @@
 			close(){
 				this.show = false;
 			},
-			iconClose(){
+			beforeClose(done){
 				if(this.okLoader) return;
+				done();
 				this.$emit('onclose');
+			},
+			afterClose(vm){
+				this.$nextTick(()=>{
+					vm.$el.remove && vm.$el.remove();
+				})
 			}
 		}
 	}

@@ -1,12 +1,16 @@
 <style lang="scss">
 	@import '~@/styles/mixins', '~@/styles/variables';
-	.area-popup.ask-modal{
-		width: 100%;
-		padding: 0;
-		border-radius: 0;
-		height: 100%;
-		overflow: hidden;
-		background-color: transparent;
+	.area-popup.ask-modal-box{
+		.ask-modal-wrapper{
+			width: 100%;
+			padding: 0;
+			border-radius: 0;
+			height: 100%;
+			overflow: hidden;
+			background-color: transparent;
+			max-width: none;
+			max-height: none;
+		}
 		.ask-modal-header{
 			padding: 8px 40px;
 			height: 62px;
@@ -20,17 +24,24 @@
 				text-align: center;
 			}
 			.ask-close-icon{
-				right: 34px;
-				width: 40px;
-				height: 40px;
-				margin-top: -20px;
-				&::before, &::after{
-					height: 4px;
-					margin-top: -2px;
-					background-color: rgba(map-get($color,200),1);
-				}
-				&:hover{
-					&::before, &::after{
+				right: 8px;
+				.icon{
+					width: 40px;
+					height: 40px;
+					&::after,
+					&::before{
+						background-color: rgba(map-get($color,200),1);
+					}
+					&::before{
+						height: 4px;
+						margin-top: -2px;
+					}
+					&::after{
+						width: 4px;
+						margin-left: -2px;
+					}
+					&:hover::after,
+					&:hover::before{
 						background-color: rgba(map-get($color,200),1);
 					}
 				}
@@ -165,90 +176,15 @@
 			}
 		}
 	}
-	.ask-modal.soft-pro-add-area{
-		width: 550px;
-		padding: 0;
-		border-radius: 8px;
-		overflow: hidden;
-		.ask-modal-header{
-			padding: 8px 40px;
-			background-color: map-get($color,500);
-			.ask-modal-title{
-				color: map-get($color,200);
-				font-size: 1.8rem;
-			}
-			.ask-close-icon{
-				right: 34px;
-				&::before, &::after{
-					background-color: rgba(map-get($color,200),.5);
-				}
-				&:hover{
-					&::before, &::after{
-						background-color: rgba(map-get($color,200),1);
-					}
-				}
-			}
-		}
-		.ask-modal-body{
-			padding: 0;
-			.box{
-				width: 100%;
-				padding: 40px 54px;
-				@include flexLayout(flex,normal,center);
-				label{
-					width: 100px;
-					font-size: 1.6rem;
-					color: map-get($color,A100);
-				}
-				input{
-					width: calc(100% - 100px);
-					border: 1px solid map-get($color,700S3);
-					color: map-get($color,A100);
-					font-size: 1.6rem;
-					padding: 10px 12px;
-					border-radius: 4px;
-					outline: none;
-					&.error{
-						border: 1px solid map-get($color,A200);
-					}
-					&:focus{
-						border: 1px solid map-get($color,500);
-					}
-				}
-			}
-		}
-		.ask-modal-footer{
-			padding: 12px 0 24px;
-			justify-content: center;
-			.ask-button{
-				min-width: auto;
-				color: map-get($color,200);
-				background-color: map-get($color,500);
-				font-size: 1.6rem;
-				width: 50%;
-				padding: 0;
-				height: 40px;
-				border-radius: 4px;
-				.inline-loader-box{
-					.inline-loader{
-						min-width: auto;
-						.iconfont{
-							color:  map-get($color,200);
-							font-size: 2.2rem;
-						}
-					}
-				}
-			}
-		}
-	}
 </style>
 <template>
-	<ask-modal  :show="show" 
-				:title="title"
-				@onclose="iconClose"
-				:closeBtn ="true"
-				:transition="'soft-pro-modal-full'"
-				class="area-popup">
+	<ask-modal 
+		:title="title" 
+		:show.sync="show"
+		:transition="'soft-pro-modal-full'"
+		:showFooter="false"
+		class="area-popup"
+		>
 		<div class="soft-pro-box">
 			<div id="lock_area_map"></div>
 		</div>
@@ -258,7 +194,7 @@
 
 import { MAPKEY,MAPCENTER} from '@/config.js';
 
-import { AMapLoad,askDialogAlert,askDialogToast } from '@/utils';
+import { AMapLoad,askDialogToast,askDialogConfirm } from '@/utils';
 
 import { DeviceSet } from '@/services';
 	export default{
@@ -270,7 +206,7 @@ import { DeviceSet } from '@/services';
 			},
 			title: {
 				type: String,
-				default: ''
+				default: '地图查看'
 			}
 		},
 		data(){
@@ -377,24 +313,32 @@ import { DeviceSet } from '@/services';
 				optValueEl.onclick = (e)=>{
 					if (e.stopPropagation) e.stopPropagation();
 					else e.cancelBubble = true;
-					const deviceSetServer = new DeviceSet();
-					deviceSetServer.delAreaList({
-						auth: this.$user.auth,
-						imei: this.$route.params.imei,
-						id: index.id
-					}).then(r=>{
-						if(r.data.code != 1000) {
-							askDialogToast({msg:r.data.message? r.data.message:`"${index.name}"删除失败`,time:2000,class:'danger'});
-							return;
-						}
-						if(r.data.code == 1000){
-							this.delList.push(index);
-							this.map.remove(marker);
-							this.map.remove(polygon);
-							this.map.clearInfoWindow();
-							askDialogToast({msg:r.data.message? r.data.message:`"${index.name}"删除成功`,time:2000,class:'success'});
-						}
-					})
+					askDialogConfirm({
+						title: '删除区域锁定',
+						content: `确定删除名称为"${index.name}"的区域？`
+					}, (vm) => {
+						const deviceSetServer = new DeviceSet();
+						deviceSetServer.delAreaList({
+							auth: this.$user.auth,
+							imei: this.$route.params.imei,
+							id: index.id
+						}).then(r=>{
+							setTimeout(() => {
+								vm.close();
+								if(r.data.code != 1000) {
+									askDialogToast({msg:r.data.message? r.data.message:`"${index.name}"删除失败`,time:2000,class:'danger'});
+									return;
+								}
+								if(r.data.code == 1000){
+									this.delList.push(index);
+									this.map.remove(marker);
+									this.map.remove(polygon);
+									this.map.clearInfoWindow();
+									askDialogToast({msg:r.data.message? r.data.message:`"${index.name}"删除成功`,time:2000,class:'success'});
+								}
+							}, 500)
+						})
+					});
 				}
 
 				optEl.appendChild(optNameEl);

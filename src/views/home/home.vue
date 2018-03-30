@@ -31,7 +31,7 @@
 <template>
 	<div class="ask-view has-bar" v-nav="{hideNavBar:false}">
 		<div class="ask-view-box">
-			<device-list :devices="devices"></device-list>
+			<device-list :devices="devices" @device-abnormal="setDeviceAbnormal(true)"></device-list>
 			<device-info :info="info"></device-info>
 		</div>
 	</div>
@@ -60,17 +60,21 @@
 		data(){
 			return{
 				devices:[],
-				info:{}
+				info:{},
+				deviceAbnormalState: false
 			}
 		},
 		created(){
 			this.refreshDevice();
 		},
 		methods:{
+			setDeviceAbnormal(r){
+				this.deviceAbnormalState = r;
+			},
 			refreshDevice(){
 				clearTimeout(DEVICE_TIMER);
 				this.deviceServer.list(this.$user.auth).then(r=>{
-					if(r.data.data.list.length <= 0) return;
+					if(!r.data.data.list || r.data.data.list.length <= 0) return;
 					let _devices = [];
 					_devices = r.data.data.list.map(index=>{
 						if(index.device_list && index.device_list.length > 0){
@@ -108,6 +112,11 @@
 							}
 						}
 					})
+					if( (this.info.place_status == 2 ||
+						  this.info.open == 1 ||
+						  this.info.dislocation_status == 2) && !this.deviceAbnormalState){
+						this.setDeviceAbnormal(true);
+					}
 				}
 			}
 		},
@@ -115,6 +124,9 @@
 			'$route' (to, from) {
 				this.info = {};
 				if(to.name == 'homeInfo'){
+					if(this.deviceAbnormalState){
+						this.setDeviceAbnormal(false);
+					}
 					this.initInfo();
 				}
 			}

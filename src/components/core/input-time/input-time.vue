@@ -46,7 +46,7 @@
 					  :max="59">
 		</input-number>
 		<div class="text">分</div>
-
+		
 		<input-number :type="'seconds'" 
 					  @number-change="onChange" 
 					  :val="curTime.seconds" 
@@ -61,7 +61,7 @@
 	import moment from 'moment/moment.js';
 	export default{
 		name:"InputTime",
-		props:['time'],
+		props:['time','type','limit','max','min'],
 		components:{
 			"input-number":inputNumber
 		},
@@ -76,39 +76,64 @@
 					seconds:null,
 					moment: null
 				},
-				maxDay: 31
+				maxDay: 31,
+				currentTime: null,
+				limits: null
 			}
 		},
 		mounted(){
-			let _m = moment(this.time);
-			this.maxDay = _m.daysInMonth();
-			this.curTime = {
-				year: _m.get('year'),
-				month: _m.get('month'),
-				date: _m.get('date'),
-				hours:_m.get('hours'),
-				minutes:_m.get('minutes'),
-				seconds:_m.get('seconds'),
-				moment: _m
-			}
+			this.setCurTime(this.time);
 		},
 		watch:{
 			time(n,o){
-				let _m = moment(this.time);
-				this.maxDay = _m.daysInMonth();
-				this.curTime = {
-					year: _m.get('year'),
-					month: _m.get('month'),
-					date: _m.get('date'),
-					hours:_m.get('hours'),
-					minutes:_m.get('minutes'),
-					seconds:_m.get('seconds'),
-					moment: _m
-				}
+				this.setCurTime(this.time);
 			}
 		},
 		methods:{
-			onChange(val,type){
+			onChange(val,type,clickType){
+				this.limits = null;
+				if(Array.isArray(this.max) && clickType == 'add'){
+					let _cur = '';
+					this.max.map(index=>{
+						if(index == 'now'){
+							if(_cur == ''){
+								_cur = moment().format("YYYY-MM-DD HH:mm:ss")
+							}else{
+								_cur = moment(_cur).isAfter(moment()) ? _cur : moment().format("YYYY-MM-DD HH:mm:ss");
+							}
+						}else{
+							if(_cur == ''){
+								_cur = index;
+							}else{
+								_cur = moment(_cur).isAfter(index) ? _cur : index;
+							}
+						}
+					})
+					this.limits = _cur;
+				}
+
+				if(Array.isArray(this.min) && clickType == 'reduce'){
+					let _cur = '';
+					this.min.map(index=>{
+						if(index == 'now'){
+							if(_cur == ''){
+								_cur = moment().format("YYYY-MM-DD HH:mm:ss")
+							}else{
+								_cur = moment(_cur).isAfter(moment()) ? _cur : moment().format("YYYY-MM-DD HH:mm:ss");
+							}
+						}else{
+							if(_cur == ''){
+								_cur = index;
+							}else{
+								_cur = moment(_cur).isAfter(index) ? _cur : index;
+							}
+						}
+					})
+					this.limits = _cur;
+				}
+				if(this.max == 'now' || this.min == 'now'){
+					this.currentTime = moment().format("YYYY-MM-DD HH:mm:ss");
+				}
 				if(type == 'year'){
 					let _m = moment(this.curTime.moment);
 					_m.set('date',1);
@@ -144,7 +169,49 @@
 					this.curTime[type] = val;
 					this.curTime.moment.set(type,val);
 				}
-				this.$emit('select',this.curTime.moment.format("YYYY-MM-DD HH:mm:ss"));
+				let _time = this.curTime.moment.format("YYYY-MM-DD HH:mm:ss"),
+					_returnTime = _time;
+
+				if(this.max != void 0 && this.max && clickType == 'add'){
+					if(this.max == 'now'){
+						_returnTime = moment(_time).isAfter(this.currentTime) ? this.currentTime:_time;
+					}else{
+						if(this.limits == null){
+							_returnTime = moment(_time).isAfter(this.max) ? moment(this.max).format("YYYY-MM-DD HH:mm:ss"):_time;
+						}else{
+							_returnTime = moment(_time).isAfter(this.limits) ? moment(this.limits).format("YYYY-MM-DD HH:mm:ss"):_time;
+						}
+						
+					}
+				}
+
+				if(this.min != void 0 && this.min && clickType == 'reduce'){
+					if(this.min == 'now'){
+						_returnTime = moment(_time).isBefore(this.currentTime) ? this.currentTime:_time;
+					}else{
+						if(this.limits == null){
+							_returnTime = moment(_time).isBefore(this.min) ? moment(this.min).format("YYYY-MM-DD HH:mm:ss"):_time;
+						}else{
+							_returnTime = moment(_time).isBefore(this.limits) ? moment(this.limits).format("YYYY-MM-DD HH:mm:ss"):_time;
+						}
+						
+					}
+				}
+				this.setCurTime(_returnTime);
+				this.$emit('select',_returnTime);
+			},
+			setCurTime(time){
+				let _m = moment(time);
+				this.maxDay = _m.daysInMonth();
+				this.curTime = {
+					year: _m.get('year'),
+					month: _m.get('month'),
+					date: _m.get('date'),
+					hours:_m.get('hours'),
+					minutes:_m.get('minutes'),
+					seconds:_m.get('seconds'),
+					moment: _m
+				}
 			}
 		}
 	}

@@ -129,6 +129,14 @@ export class Device{
 		}
 		return this._ajax('post',option);
 	}
+	getAbnormal(opt){
+		let option={
+			"access_token": opt.auth, 
+		    "imei": opt.imei, 
+		    "method": "web.clicklog"
+		}
+		return this._ajax('post',option);
+	}
 	_ajax(method,options){
 		options = options || {};
 		return ajax({

@@ -19,11 +19,15 @@ import askTabComponents from './ask-tab';
 //ask-scroll组件
 import askScroll from './ask-scroll';
 
-//单选按钮组件
+//radio组件
 import askRadio from './ask-radio/ask-radio.vue';
 
 //input组件
 import askInput from './ask-input/ask-input.vue';
+
+//select组件
+import askSelect from './ask-select/ask-select.vue';
+import askOption from './ask-select/ask-option.vue';
 
 const components = {
 	'ask-button': askButton,
@@ -34,7 +38,9 @@ const components = {
 	'ask-overlay':askOverlay,
 	'ask-loader':askLoader,
 	'ask-radio':askRadio,
-	'ask-input':askInput
+	'ask-input':askInput,
+	'ask-select':askSelect,
+	'ask-option':askOption,
 }
 Object.assign(components,askTabComponents,askScroll);
 

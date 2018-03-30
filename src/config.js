@@ -4,8 +4,10 @@ let config = {
 	getBaseUrl() {
 		let _r = this.el.getAttribute('data-api');
 		if (this.isLocal) {
-			_r = 'http://192.168.1.101:8045/api';
+			_r = 'http://localhost:8046/api';
+			_r = 'http://www.askmewhy.cn/soft-delivery/api/';
 			// _r = 'http://box.bocaihd.com/page/web-app/api';
+			// _r = 'http://box.linkvalue.com.cn/page/web-app/api';
 			/*{
 				13540270352,
 				123456
@@ -33,8 +35,9 @@ let config = {
 		return 'b2a77f35f8b6d8690bb6988a626d4f17';
 	},
 	mapCenter(){
-		return [104.065837, 30.657349];
-	}
+		return [116.397477,39.908692];
+	},
+	getType: 6
 }
 
 export const MAPKEY = config.mapKey();
@@ -42,3 +45,4 @@ export const MAPCENTER = config.mapCenter();
 export const BASE_URL = config.getBaseUrl();
 export const AUTH_TOKEN = config.getAuthToken();
 export const W_ID = config.getWId();
+export const FROM_TYPE = config.getType;

@@ -37,9 +37,11 @@
 			background-color: rgba(map-get($color, 400), .7);
 		}
 		.el-menu-item, .el-submenu__title {
-			font-size: 1.8rem;
+			font-size: 1.6rem;
 			color: map-get($color, 200);
 			position: relative;
+			height: 40px;
+			line-height: 40px;
 			&::after {
 				content: '';
 				position: absolute;
@@ -59,9 +61,12 @@
 			}
 			&.is-active {
 				background-color: transparent;
+				.dl-name.online{
+					color:#ffd04b;
+				}
 			}
 			.iconfont {
-				font-size: 2.6rem;
+				font-size: 2rem;
 				padding: 0 2px;
 				&.icon-gongsi {
 					color: map-get($color, 200);
@@ -70,10 +75,31 @@
 		}
 		.dl-name{
 			display: inline-block;
-			width: 98px;
+			/* width: 98px; */
+			width: 80px;
+			line-height: normal;
 			@include textEllipsis(1);
+			&.online{
+				color: map-get($color,500S2);
+			}
 		}
-		.icon-ccgl-yuliuyusuoding-4 {
+		.el-menu-item.is-remote{
+			background-color: map-get($color,A400);
+		}
+		.icon-remote{
+			color: map-get($color,200);
+			font-size: 1.6rem;
+			font-weight: 900;
+			border: 2px solid map-get($color,200);
+			border-radius: 4px;
+			font-style: normal;
+			width: 26px;
+			height: 24px;
+			text-align: center;
+			line-height: 20px;
+			display: inline-block;
+		}
+		.icon-suo {
 			color: map-get($color, 200);
 		}
 		.icon-xiangzi {
@@ -87,11 +113,42 @@
 			text-shadow: 0 0 12px map-get($color, 200);
 		}
 		.icon-displacement{
-			width: 28px;
+			width: 20px;
 		}
 		.ask-button{
 			width: 100%;
 			min-width: auto;
+		}
+		.device-electricity{
+			display: inline-block;
+			width: 48px;
+			height: 22px;
+			position: relative;
+			font-size: 12px;
+			color: map-get($color,200);
+			line-height: 22px;
+			overflow: hidden;
+			transform: scale(.75);
+			transform-origin:center center;
+			.iconfont{
+				display: inline-block;
+				color:inherit;
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate3d(-40%,-28%,0);
+				z-index: 1;
+				text-align: center;
+				font-size: 28px;
+			}
+			.electricity{
+				position: relative;
+				z-index: 2;
+				text-align: center;
+			}
+		}
+		.sub-right{
+			transform: translate3d(-20px,0,0);
 		}
 	}
 }
@@ -115,27 +172,36 @@
 								<i class="iconfont icon-yichangminglu" v-if="device.abnormal"></i>
 							</template>
 							<template v-for="(sub,$s) in device.device_list">
-								<el-menu-item :index="`${$d+1}-${$s+1}`" @click="onClick(sub)">
+								<el-menu-item :index="`${$d+1}-${$s+1}`" @click="onClick(sub)" 
+									:class="{'is-remote': sub.authorize == 1}">
 									<template slot="title">
-										<i class="iconfont icon-ccgl-yuliuyusuoding-4" 
-										:style="{visibility:(sub.lock_man == 1) ? 'visible':'hidden'}"></i>
-										<span class="dl-name">{{sub.name}}</span>
-										<i class="iconfont icon-dunpai1" v-if="sub.place_status == 2"></i>
-										<i class="iconfont icon-xiangzi" v-if="sub.open == 1"></i>
-										<img class="icon-displacement" v-if="sub.dislocation_status == 2" src="~@/assets/icon_displacement.png" alt="icon">
+										<div class="sub-right">
+											<div class="device-electricity" :style="{visibility: sub.online ? 'visible':'hidden'}">
+												<i class="iconfont icon-dianliang"></i>
+												<div class="electricity">{{sub.soc <= 0 ? 0 : sub.soc}}%</div>
+											</div>
+											<i class="iconfont icon-suo" :style="{visibility:(sub.lock_man == 1) ? 'visible':'hidden'}"></i>
+											<span class="dl-name" :class="{'online':sub.online}">{{sub.name}}</span>
+											<i class="iconfont icon-xiangzi" v-if="sub.open == 1"></i>
+											<i class="iconfont icon-dunpai1" v-if="sub.place_status == 2"></i>
+											<img class="icon-displacement" v-if="sub.dislocation_status == 2" src="~@/assets/icon_displacement.png" alt="icon">
+										</div>
 									</template>
 								</el-menu-item>
 							</template>
 						</el-submenu>
 					</template>
 					<template v-else>
-						<el-menu-item :index="$d+1+''" @click="onClick(device)">
+						<el-menu-item :index="$d+1+''" @click="onClick(device)" :class="{'is-remote': device.authorize == 1}">
 							<template slot="title">
-								<i class="iconfont icon-ccgl-yuliuyusuoding-4" 
-								:style="{visibility:(device.lock_man == 1) ? 'visible':'hidden'}"></i>
-								<span class="dl-name">{{device.name}}</span>
-								<i class="iconfont icon-dunpai1" v-if="device.place_status == 2"></i>
+								<div class="device-electricity" :style="{visibility: device.online ? 'visible':'hidden'}">
+									<i class="iconfont icon-dianliang"></i>
+									<div class="electricity">{{device.soc <= 0 ? 0 : device.soc}}%</div>
+								</div>
+								<i class="iconfont icon-suo" :style="{visibility:(device.lock_man == 1) ? 'visible':'hidden'}"></i>
+								<span class="dl-name" :class="{'online':device.online}">{{device.name}}</span>
 								<i class="iconfont icon-xiangzi" v-if="device.open == 1"></i>
+								<i class="iconfont icon-dunpai1" v-if="device.place_status == 2"></i>
 								<img class="icon-displacement" v-if="device.dislocation_status == 2" src="~@/assets/icon_displacement.png" alt="icon">
 							</template>
 						</el-menu-item>
@@ -158,13 +224,20 @@ export default {
 			defaultActive: ''
 		}
 	},
+	inject:['rootHome'],
 	props: ['devices'],
 	mounted(){
 		this.menuActiveInit();
 	},
 	methods: {
 		onClick(once){
-			this.$router.push({ path: `/home/${once.imei}`});
+			if( once.place_status == 2 ||
+				once.open == 1 ||
+				once.dislocation_status == 2){
+				this.$emit('device-abnormal');
+			}
+			this.rootHome.refreshDevice();
+			this.$router.push({ path: `/home/${once.imei}?l=${Date.now()}`});
 		},
 		onSelect(index,indexPath,item){
 		},

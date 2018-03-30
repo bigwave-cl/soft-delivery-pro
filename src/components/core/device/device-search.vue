@@ -140,7 +140,7 @@
 		<div class="search-box">
 			<input 
 				type="text" 
-				placeholder="搜索设备"
+				placeholder="请输入安全箱名称"
 				v-model="search"
 				v-validate="'required'"
 				@keyup.enter="onClick"
@@ -156,11 +156,11 @@
 			<transition name="search-body-trigger">
 				<div class="search-result"  v-show="bodyShow">
 					<div class="sb-close">
-						<ask-button @ask-click="onCloseClick">close</ask-button>
+						<ask-button @ask-click="onCloseClick">关闭</ask-button>
 					</div>
 					<ul class="list">
 						<template v-if="search == ''">
-							<li class="center">请输入设备名</li>
+							<li class="center">请输入安全箱名称</li>
 						</template>
 						<template v-if="search != '' && list.length <= 0 && msg">
 							<li class="center text-unlimited">暂无“{{search}}”的相关数据</li>
@@ -221,7 +221,7 @@
 						return;
 					}
 					askDialogToast({
-						msg: '请输入设备名',
+						msg: '请输入安全箱名称',
 						time: 2000,
 						position: 'top-center',
 						class: 'danger'

@@ -30,15 +30,15 @@ export default {
 			this.$emit('overlayClick');
 		},
 		afterLeave() {
-			if (this.$el.remove) this.$el.remove();
-			this.$destroy();
+			// if (this.$el.remove) this.$el.remove();
+			// this.$destroy();
 		}
 	},
 	destroyed() {
-		this.$nextTick(function() {
-			if (this.$el.remove) this.$el.remove();
-			this.$destroy();
-		})
+		// this.$nextTick(function() {
+		// 	if (this.$el.remove) this.$el.remove();
+		// 	this.$destroy();
+		// })
 	},
 	computed: {
 		zIndex() {

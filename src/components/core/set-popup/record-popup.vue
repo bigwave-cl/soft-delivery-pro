@@ -1,11 +1,14 @@
 <style lang="scss">
 @import '~@/styles/mixins', '~@/styles/variables';
-.record-popup.ask-modal {
-	max-width: 800px;
-	width: 70%;
-	padding: 0;
-	border-radius: 8px;
-	overflow: hidden;
+.record-popup.ask-modal-box {
+	.ask-modal-wrapper {
+		max-width: 800px;
+		min-width: 550px;
+		width: 70%;
+		padding: 0;
+		border-radius: 8px;
+		overflow: hidden;
+	}
 	.ask-modal-header {
 		padding: 8px 40px;
 		background-color: map-get($color, 500);
@@ -14,12 +17,12 @@
 			font-size: 1.8rem;
 		}
 		.ask-close-icon {
-			right: 34px;
-			&::before, &::after {
-				background-color: rgba(map-get($color, 200), .5);
-			}
-			&:hover {
-				&::before, &::after {
+			right: 8px;
+			.icon {
+				&::after, &::before {
+					background-color: rgba(map-get($color, 200), .5);
+				}
+				&:hover::after, &:hover::before {
 					background-color: rgba(map-get($color, 200), 1);
 				}
 			}
@@ -35,7 +38,7 @@
 	}
 	.soft-pro-box {
 		text-align: center;
-		height: 501px;
+		height: 490px;
 		.ul-table {
 			width: 100%;
 			@include flexLayout(flex, normal, center);
@@ -55,7 +58,7 @@
 				padding-right: 8px;
 				background-color: map-get($color, 700S1);
 				li {
-					color: ma-get($color, 600D1);
+					color: map-get($color, 600D1);
 					@include textEllipsis(1);
 					font-size: 1.8rem;
 				}
@@ -118,41 +121,41 @@
 				background-color: rgba(map-get($color, 700S3), 1);
 			}
 		}
-		.filter-box{
+		.filter-box {
 			widows: 100%;
-			padding:0 20px 10px 60px;
-			.filter-title{
+			padding: 0 20px 10px 60px;
+			.filter-title {
 				padding: 10px 0;
+				min-height: 30px;
 				text-align: left;
 				font-size: 1.6rem;
-				color: map-get($color,500);
+				color: map-get($color, 500);
 			}
-			.filter-body{
-				@include flexLayout(flex,normal,center);
+			.filter-body {
+				@include flexLayout(flex, normal, center);
 				padding: 10px 0 0;
-				.fb-once{
-					@include flexLayout(flex,normal,center);
+				.fb-once {
+					@include flexLayout(flex, normal, center);
 					margin-right: 10px;
-					label{
+					label {
 						font-size: 1.8rem;
-						color: map-get($color,A100);
+						color: map-get($color, A100);
 						margin-right: 10px;
 					}
-					.fb-select{
+					.fb-select {
 						font-size: 1.8rem;
-						color: map-get($color,A100);
+						color: map-get($color, A100);
 						min-width: 140px;
 						transform: translateZ(0);
 					}
-
 				}
 			}
-			.filter-footer{
+			.filter-footer {
 				width: 100%;
-				.text{
+				.text {
 					text-align: right;
 					font-size: 1.4rem;
-					color: map-get($color,A100);
+					color: map-get($color, A100);
 				}
 			}
 		}
@@ -164,16 +167,17 @@
 
 </style>
 <template>
-	<ask-modal :show="show" 
-			   :title="title" 
-			   @onclose="iconClose" 
-			   @initmodal="initModal" 
-			   :closeBtn="true" 
-			   :transition="'soft-pro-modal'" 
-			   class="record-popup">
+	<ask-modal 
+		:title="title" 
+		:show.sync="show"
+		:beforeClose="beforeClose"
+		@open="initModal"
+		:showFooter="false"
+		class="record-popup"
+		>
 		<div class="soft-pro-box">
 			<div class="filter-box">
-				<div class="filter-title">筛选</div>
+				<div class="filter-title"><!-- 筛选 --></div>
 				<div class="filter-body">
 					<div class="fb-once">
 						<label>用户</label>
@@ -224,7 +228,7 @@
 </template>
 <script>
 import inlineLoader from '../inline-loader/inline-loader.vue';
-import { askDialogConfirm, askDialogToast } from '@/utils';
+import { askDialogToast } from '@/utils';
 import { DeviceSet } from '@/services';
 import recordMixins from './record-mixins.js';
 export default {
@@ -232,7 +236,7 @@ export default {
 	components: {
 		'inline-loader': inlineLoader,
 	},
-	mixins:[recordMixins],
+	mixins: [recordMixins],
 	props: {
 		show: {
 			type: Boolean,
@@ -243,17 +247,38 @@ export default {
 			default: '操作记录'
 		}
 	},
-	computed:{
-		userOption(){
+	computed: {
+		userOption() {
 			let _opts = ['查看全部'],
 				_json = {};
-			this.list.map(index=>{
-				if(!_json[index.username]){
+			this.list.map(index => {
+				if (!_json[index.username]) {
 					_opts.push(index.username);
 					_json[index.username] = 1;
 				}
 			})
-			return _opts;
+			let _optsfliter = [],
+				_jsonfliter = {};
+
+			this.filterList.map(index => {
+				if (!_jsonfliter[index.username]) {
+					_optsfliter.push(index.username);
+					_jsonfliter[index.username] = 1;
+				}
+			})
+
+			let _opts3 = _opts.concat(_optsfliter);
+
+			let _opts4 = [],
+				_json4 = {};
+
+			_opts3.map(index=>{
+				if (!_json4[index]) {
+					_opts4.push(index);
+					_json4[index] = 1;
+				}
+			});
+			return _opts4;
 		}
 	},
 	data() {
@@ -262,49 +287,49 @@ export default {
 			hasmore: true,
 			list: [],
 			page: 1,
-			total:0,
+			total: 0,
 			type: "",
 			username: "",
 			infiniteLoading: false,
-			filterUser:"",
-			filterType:"",
-			filterList:[],
+			filterUser: "",
+			filterType: "",
+			filterList: [],
 			isChangeList: true
 		}
 	},
-	watch:{
-		filterUser(n,o){
+	watch: {
+		filterUser(n, o) {
 			this.username = this.userOption[n];
 			this.page = 1;
 			this.filterList = [];
-			if(n == 0){
+			if (n == 0) {
 				this.username = '';
 				this.isChangeList = true;
-			}else{
+			} else {
 				this.isChangeList = false;
 			}
 			this.getRecordList();
 		},
-		filterType(n,o){
+		filterType(n, o) {
 			//与后台约定选择“app蓝牙操作”的时候传递id为1
 			this.type = this.types[n].id;
 
-			if(this.type.length>0){
+			if (this.type.length > 0) {
 				this.type = this.type[0];
 			}
 			this.page = 1;
 			this.filterList = [];
-			if(this.type == -1){
+			if (this.type == -1) {
 				this.type = "";
 				this.isChangeList = true;
-			}else{
+			} else {
 				this.isChangeList = false;
 			}
 			this.getRecordList();
 		}
 	},
 	methods: {
-		iconClose() {
+		beforeClose() {
 			this.$emit('onclose');
 		},
 		initModal() {
@@ -330,10 +355,10 @@ export default {
 					let _once = {
 						username: index.username,
 						type: this.buildType(index.type),
-						action:this.buildAction(index.act),
+						action: this.buildAction(index.act),
 						time: index.created_at
 					}
-					if(this.isChangeList){
+					if (this.isChangeList) {
 						this.list.push(_once);
 					}
 					this.filterList.push(_once);

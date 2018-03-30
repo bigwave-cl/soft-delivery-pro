@@ -1,72 +1,190 @@
+<style lang="scss">
+@import '~@/styles/mixins', '~@/styles/variables';
+$bg: #fff #474443 #999 #333;
+$color: #474443 #7e848c #474a4f;
+	.ask-modal-box{
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events:none;
+		@include flexLayout(flex,center,center);
+		.ask-modal-wrapper{
+			width: 80%;
+			max-width: 800px;
+			max-height: 800px;
+			overflow: hidden;
+			pointer-events: auto;
+			background-color: nth($bg,1);
+			box-shadow: 0 19px 38px rgba(0, 0, 0, .3), 0 15px 12px rgba(0, 0, 0, .22);
+			border-radius: 4px;
+		}
+		.ask-modal-header{
+			padding: 14px 14px;
+			position: relative;
+			.ask-modal-title{
+				font-size: 1.8rem;
+				@include textEllipsis(1);
+				color: nth($color,1);
+				padding-right: 28px;
+			}
+			.ask-close-icon{
+				position: absolute;
+				top: 50%;
+				right: 0;
+				transform: translate(-80%,-50%) rotate(45deg);
+				z-index: 2;
+				cursor: pointer;
+				.icon{
+					display: block;
+					width: 24px;
+					height: 24px;
+					position: relative;
+					&::after,
+					&::before{
+						position: absolute;
+						content: '';
+						transition: background .2s;
+						border-radius: 100%;
+						background: nth($bg,3);
+					}
+					&::before{
+						top: 50%;
+						left: 0;
+						width: 100%;
+						height: 2px;
+						margin-top: -1px;
+					}
+					&::after{
+						top: 0;
+						left: 50%;
+						width: 2px;
+						height: 100%;
+						margin-left: -1px;
+					}
+					&:hover::after,
+					&:hover::before{
+						background: nth($bg,4);
+					}
+				}
+			}
+		}
+		.ask-modal-body{
+			font-size: 1.6rem;
+			word-break: break-all;
+			white-space: normal;
+			color: nth($color,1);
+			padding: 0 10px;
+		}
+		.ask-modal-footer{
+			width: 100%;
+			padding: 14px 14px;
+			@include flexLayout(flex,right,center);
+		}
+		
+		/* 进入过渡的状态 */
+		.ask-modal-fill-enter-active{
+	        animation: modal-fill-enter .5s both cubic-bezier(.4, 0, 0, 1.5);
+		}
+		@keyframes modal-fill-enter{
+			0%{
+				transform: scale(1.4);
+				opacity: 0;
+			}
+			100%{
+				transform: scale(1);
+				opacity: 1;
+			}
+		}
+		/* 离开过渡的状态 */
+		.ask-modal-fill-leave-active{
+	        animation: modal-fill-leave .5s both;
+		}
+
+		@keyframes modal-fill-leave{
+			0%{
+				transform: scale(1);
+				opacity: 1;
+			}
+			100%{
+				transform: scale(1.2);
+				opacity: 0;
+			}
+		}
+	}
+</style>
 <template>
-	<transition :name="transition" @after-enter="afterEnter" @after-leave="afterLeave">
-		<div class="ask-modal" v-if="show" :style="style" :class="theme">
-			<div class="ask-visually-hidden"></div>
-			<div class="ask-modal-header" v-if="title || !closeIcon">
-				<div class="ask-modal-title" v-if="title">
-					{{title}}
-				</div>
-				<div class="ask-close-icon" v-if="!closeIcon" @click.once="close"></div>
-			</div>
-			<div class="ask-modal-body">
-				<slot>
-					<div class="custom" v-html="content" @click.once="customClose">
+	<div class="ask-modal-box" :style="style">
+		<transition :name="transition" @after-enter="afterEnter" @after-leave="afterLeave">
+			<div class="ask-modal-wrapper" v-if="show">
+				<div class="ask-modal-header" v-if="showHeader">
+					<div class="ask-modal-title" v-if="title">{{title}}</div>
+					<div class="ask-close-icon" v-if="showClose" @click="close">
+						<span class="icon"></span>
 					</div>
-				</slot>
+				</div>
+				<div class="ask-modal-body">
+					<slot></slot>
+				</div>
+				<div class="ask-modal-footer" v-if="showFooter">
+					<slot name="footer">
+						<ask-button text="关闭" @ask-click="close"></ask-button>
+					</slot>
+				</div>
 			</div>
-			<div class="ask-modal-footer" v-if="!closeBtn">
-				<slot name="footer">
-					<ask-button text="关闭" @ask-click="cancel"></ask-button>
-				</slot>
-			</div>
-			<div class="ask-visually-hidden"></div>
-		</div>
-	</transition>
+		</transition>
+	</div>
 </template>
-<style src="./ask-modal.scss" lang="scss"></style>
 <script>
 import askOverlay from '../ask-overlay/ask.overlay.js';
 export default {
 	props: {
 		show: {
 			type: Boolean,
-			default: false
+			default: false //是否显示，默认不显示
+		},
+		showHeader:{
+			type: Boolean,
+			default: true //是否显示头部，默认显示
+		},
+		showFooter:{
+			type: Boolean,
+			default: true //是否显示底部，默认显示
 		},
 		title: {
 			type: String,
-			default: ''
+			default: '' //是否有标题，默认没有
 		},
-		closeBtn: {
+		showClose: {
 			type: Boolean,
-			default: false
-		},
-		closeIcon: {
-			type: Boolean,
-			default: false
+			default: true //是否显示关闭icon,默认显示
 		},
 		shade: {
 			type: Number,
-			default: .4
+			default: .4  //遮罩层透明度
 		},
 		shadeColor: {
 			type: String,
-			default: '#000'
+			default: '#000' //遮罩层颜色
 		},
 		shadeClick: {
 			type: Boolean,
-			default: true
+			default: true //是否可以点击触发关闭事件
 		},
-		content: {
-			type: '',
-			default: ''
+		beforeClose: {
+			type: Function,
+			default:null
 		},
-		contentClick: {
-			type: Boolean,
-			default: false
+		afterClose: {
+			type: Function,
+			default:null
 		},
 		transition: {
 			type: String,
-			default: 'ask-modal-door'
+			default: 'ask-modal-fill' //弹框进场和离场样式名
 		}
 	},
 	data() {
@@ -83,27 +201,33 @@ export default {
 		}
 	},
 	methods: {
-		customClose() {
-			if (this.contentClick) {
-				this.$emit('onclose');
+		close() {
+			if(this.beforeClose &&　Object.prototype.toString.call(this.beforeClose) === '[object Function]'){
+				this.beforeClose(this.closeModal);
+			}else{
+				this.closeModal();
 			}
 		},
-		cancel() {
-			this.$emit('oncancel');
-		},
-		close() {
-			this.$emit('onclose');
+		closeModal(){
+			this.$emit('update:show',false);
+			this.$emit('close');
 		},
 		afterEnter() {
-			this.$emit('initmodal');
+			this.$emit('open');
 		},
 		afterLeave() {
-			if (this.$el.remove) this.$el.remove();
-			this.$destroy();
+			this.$nextTick(function() {
+				this.afterClose&&this.afterClose(this);
+				askOverlay.close(this, 'des');
+			})
 		}
 	},
 	mounted() {
-		if (this.show) askOverlay.open(this);
+		if (this.show) {
+			askOverlay.open(this);
+			document.body.appendChild(this.$el);
+			this.$emit('update:show',true);
+		}
 	},
 	destroyed() {
 		this.$nextTick(function() {
@@ -114,8 +238,8 @@ export default {
 		show: function(n, o) {
 			if (n) {
 				askOverlay.open(this);
-			} else {
-				// askOverlay.close(this,'one');
+				document.body.appendChild(this.$el);
+				this.$emit('update:show',true);
 			}
 		}
 	}

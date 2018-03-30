@@ -1,34 +1,48 @@
 import Vue from 'vue'
 import ComponentTemplate from './ask-confirm.vue';
 const VueComponent = Vue.extend(ComponentTemplate);
+import {merge} from '@/utils';
 
 export const askConfirm = (option, onOk, onCancel, onClose) => {
 	let vm = new VueComponent().$mount();
 	let opt = {
-		msg: '',
+		content: '',
 		title: '信息',
-		closeIcon: false,
+		cancel: true,
+		sure: true,
 		shadeClick: true,
-		closeBtn: false,
+		showClose: true,
 		theme: ''
 	}
 
-	opt = Object.assign(opt, option);
-	vm.message = opt.msg;
+	opt = merge(true, opt, option);
+	vm.content = opt.content;
 	vm.title = opt.title;
-	vm.icon = opt.closeIcon;
+	vm.showClose = opt.showClose;
 	vm.shadeClick = opt.shadeClick;
 	vm.theme = opt.theme||'';
-	vm.closeBtn = opt.closeBtn;
+	if(Object.prototype.toString.call(opt.cancel) == '[object Boolean]'){
+		vm.cancelBtn = opt.cancel;
+	}else{
+		vm.cancelBtn = true;
+		vm.cancelText = opt.cancel;
+	}
+	if(Object.prototype.toString.call(opt.sure) == '[object Boolean]'){
+		vm.sureBtn = opt.sure;
+	}else{
+		vm.sureBtn = true;
+		vm.sureText = opt.sure;
+	}
+
 	vm.$on('onok', () => {
 		if (onOk) onOk(vm);
 	});
 	vm.$on('oncancel', () => {
-		vm.show = false;
+		vm.close();
 		if (onCancel) onCancel(vm);
 	});
 	vm.$on('onclose', () => {
-		vm.show = false;
+		vm.close();
 		if (onClose) onClose(vm);
 	});
 	document.body.appendChild(vm.$el);

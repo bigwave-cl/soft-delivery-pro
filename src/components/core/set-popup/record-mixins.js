@@ -1,8 +1,8 @@
 /*
  * @Author: askMeWhy
  * @Date:   2017-11-22 10:20:00
- * @Last Modified by:   smile
- * @Last Modified time: 2017-11-22 17:08:53
+ * @Last Modified by:   bigWave
+ * @Last Modified time: 2017-12-04 12:00:18
  */
 export default {
 	data() {
@@ -27,6 +27,10 @@ export default {
 				{
 					id: 5,
 					value: 'PC端远程操作'
+				},
+				{
+					id: 6,
+					value: 'Web远程操作'
 				}
 			],
 			actions: [{

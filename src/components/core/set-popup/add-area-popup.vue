@@ -1,12 +1,16 @@
 <style lang="scss">
 	@import '~@/styles/mixins', '~@/styles/variables';
-	.area-popup.ask-modal{
-		width: 100%;
-		padding: 0;
-		border-radius: 0;
-		height: 100%;
-		overflow: hidden;
-		background-color: transparent;
+	.area-popup.ask-modal-box{
+		.ask-modal-wrapper{
+			width: 100%;
+			padding: 0;
+			border-radius: 0;
+			height: 100%;
+			overflow: hidden;
+			background-color: transparent;
+			max-width: none;
+			max-height: none;
+		}
 		.ask-modal-header{
 			padding: 8px 40px;
 			height: 62px;
@@ -20,17 +24,24 @@
 				text-align: center;
 			}
 			.ask-close-icon{
-				right: 34px;
-				width: 40px;
-				height: 40px;
-				margin-top: -20px;
-				&::before, &::after{
-					height: 4px;
-					margin-top: -2px;
-					background-color: rgba(map-get($color,200),1);
-				}
-				&:hover{
-					&::before, &::after{
+				right: 8px;
+				.icon{
+					width: 40px;
+					height: 40px;
+					&::after,
+					&::before{
+						background-color: rgba(map-get($color,200),1);
+					}
+					&::before{
+						height: 4px;
+						margin-top: -2px;
+					}
+					&::after{
+						width: 4px;
+						margin-left: -2px;
+					}
+					&:hover::after,
+					&:hover::before{
 						background-color: rgba(map-get($color,200),1);
 					}
 				}
@@ -54,11 +65,13 @@
 			}
 		}
 	}
-	.ask-modal.soft-pro-add-area{
-		width: 550px;
-		padding: 0;
-		border-radius: 8px;
-		overflow: hidden;
+	.ask-modal-box.soft-pro-add-area{
+		.ask-modal-wrapper{
+			width: 550px;
+			padding: 0;
+			border-radius: 8px;
+			overflow: hidden;
+		}
 		.ask-modal-header{
 			padding: 8px 40px;
 			background-color: map-get($color,500);
@@ -67,12 +80,14 @@
 				font-size: 1.8rem;
 			}
 			.ask-close-icon{
-				right: 34px;
-				&::before, &::after{
-					background-color: rgba(map-get($color,200),.5);
-				}
-				&:hover{
-					&::before, &::after{
+				right: 8px;
+				.icon{
+					&::after,
+					&::before{
+						background-color: rgba(map-get($color,200),.5);
+					}
+					&:hover::after,
+					&:hover::before{
 						background-color: rgba(map-get($color,200),1);
 					}
 				}
@@ -132,12 +147,13 @@
 	}
 </style>
 <template>
-	<ask-modal  :show="show" 
-				:title="title"
-				@onclose="iconClose"
-				:closeBtn ="true"
-				:transition="'soft-pro-modal-full'"
-				class="area-popup">
+	<ask-modal 
+		:title="title" 
+		:show.sync="show"
+		:transition="'soft-pro-modal-full'"
+		:showFooter="false"
+		class="area-popup"
+		>
 		<div class="soft-pro-box">
 			<div id="lock_area_map"></div>
 		</div>
@@ -206,7 +222,7 @@ import { DeviceSet } from '@/services';
 							askDialogAlert({
 								title: '区域锁定',
 								class: 'soft-pro-add-area',
-								msg: `
+								content: `
 										<div class="box">
 											<label for="lock_area_input">区域名称</label>
 											<input type="text" id="lock_area_input" name="" value="" placeholder="请输入名称">

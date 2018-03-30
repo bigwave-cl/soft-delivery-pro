@@ -1,10 +1,12 @@
 <style lang="scss">
 	@import '~@/styles/mixins', '~@/styles/variables';
-	.add-user-info-popup.ask-modal{
-		width: 550px;
-		padding: 0;
-		border-radius: 8px;
-		overflow: hidden;
+	.add-user-info-popup.ask-modal-box{
+		.ask-modal-wrapper{
+			width: 550px;
+			padding: 0;
+			border-radius: 8px;
+			overflow: hidden;
+		}
 		.ask-modal-header{
 			padding: 8px 40px;
 			background-color: map-get($color,500);
@@ -13,12 +15,14 @@
 				font-size: 1.8rem;
 			}
 			.ask-close-icon{
-				right: 34px;
-				&::before, &::after{
-					background-color: rgba(map-get($color,200),.5);
-				}
-				&:hover{
-					&::before, &::after{
+				right: 8px;
+				.icon{
+					&::after,
+					&::before{
+						background-color: rgba(map-get($color,200),.5);
+					}
+					&:hover::after,
+					&:hover::before{
 						background-color: rgba(map-get($color,200),1);
 					}
 				}
@@ -111,12 +115,13 @@
 	}
 </style>
 <template>
-	<ask-modal  :show="show" 
-				:title="title"
-				@onclose="iconClose"
-				:closeBtn ="true"
-				:transition="'soft-pro-modal'"
-				class="add-user-info-popup">
+	<ask-modal 
+		:title="title" 
+		:show.sync="show"
+		:beforeClose="beforeClose"
+		:showFooter="false"
+		class="add-user-info-popup"
+		>
 		<div class="soft-pro-box">
 			<form @submit.prevent="saveUser">
 				<div class="group-out">
@@ -183,7 +188,7 @@
 </template>
 <script>
 import inlineLoader from '../inline-loader/inline-loader.vue';
-import { askDialogConfirm,askDialogToast } from '@/utils';
+import { askDialogToast } from '@/utils';
 import { DeviceSet } from '@/services';
 import {Validator} from 'vee-validate'
 	export default{
@@ -223,7 +228,7 @@ import {Validator} from 'vee-validate'
 			}
 		},
 		methods:{
-			iconClose(){
+			beforeClose(){
 				this.$emit('onclose');
 			},
 			saveUser(){

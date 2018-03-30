@@ -3,6 +3,7 @@ import axios from 'axios'
 import qs from 'qs';
 import * as config from '@/config.js';
 import * as es6Promise from 'es6-promise';
+import {merge} from '@/utils';
 
 es6Promise.polyfill();
 export default async(options) => {
@@ -15,24 +16,16 @@ export default async(options) => {
 		before: null,
 		headers: null, //formData|null 
 	};
-
-	Object.keys(options).forEach(key => {
-		opt[key] = options[key];
-	})
+	opt = merge(true,opt,options);
 	opt.method = opt.method.toUpperCase();
-	/*Object.defineProperties(opt.data, {
-		"wid": {
-			value: config.W_ID,
-			writable: false,
-			enumerable: true
-		},
-		"access_token": {
-			value: config.AUTH_TOKEN,
+	Object.defineProperties(opt.data, {
+		"fromtype": {
+			value: config.FROM_TYPE,
 			writable: false,
 			enumerable: true
 		}
-	});*/
-
+	});
+	
 	//添加一个请求拦截器
 	axios.interceptors.request.use(function(config) {
 		//在请求发送之前做一些事

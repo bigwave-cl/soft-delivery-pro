@@ -3,7 +3,7 @@
 import Vue from 'vue'
 import App from './App'
 import ElementUI from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.scss'
+import 'element-ui/lib/theme-chalk/index.css'
 import router from './router'
 import ASKComponents from './components/ask';
 import './router/router.auth.js';
@@ -14,7 +14,7 @@ Vue.config.keyCodes = {
 }
 Vue.prototype.$user = null;
 //是否为专业版，控制显示
-Vue.prototype.$isPro = false;
+Vue.prototype.$isPro = false; //是否是专业版 true=>是，false=>否
 Vue.config.productionTip = false
 Vue.use(ASKComponents);
 Vue.use(VeeValidate);

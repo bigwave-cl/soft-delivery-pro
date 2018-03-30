@@ -1,19 +1,23 @@
 <template>
-	<ask-modal  :show="show" 
-				:title="title" 
-				:closeIcon="icon" 
-				:shade="shade"
-				:shadeColor="shadeColor"
-				:shadeClick="shadeClick"
-				@oncancel="cancel" 
-				@onclose="iconClose"
-				:closeBtn="closeBtn"
-				:class="theme">
-		<div class="confirm-box" v-if="message" v-html="message">
+	<ask-modal 
+		:title="title" 
+		:show.sync="show"
+		:shade="shade"
+		:shadeColor="shadeColor"
+		:shadeClick="shadeClick"
+		@open="open"
+		:beforeClose="beforeClose"
+		:afterClose="afterClose"
+		:class="theme"
+		class="ask-confirm"
+		:showClose="showClose"
+		:showFooter= "(cancelBtn||sureBtn)"
+	>
+		<div class="confirm-box" v-if="content" v-html="content">
 		</div>
-	    <ask-button slot="footer" class="confirm-btn" :text="cancelText" @ask-click="cancel"></ask-button>
-	    <ask-button slot="footer" class="confirm-btn" @ask-click="sure" :disabled="okLoader">
-	    	{{okText}}
+	    <ask-button slot="footer" class="confirm-btn" v-if="cancelBtn" :text="cancelText" @ask-click="cancel"></ask-button>
+	    <ask-button slot="footer" class="confirm-btn" v-if="sureBtn" @ask-click="sure" :disabled="okLoader">
+	    	{{sureText}}
 			<inline-loader v-show="okLoader" class="ask-confirm-loader"></inline-loader>
 	    </ask-button>
 	</ask-modal>
@@ -42,7 +46,7 @@
 				type:Boolean,
 				default:false
 			},
-			message: {
+			content: {
 				type:String,
 				default:''
 			},
@@ -50,21 +54,35 @@
 				type:String,
 				default:''
 			},
-			icon: {
+			showClose: {
 				type: Boolean,
-				default:false
-			}
+				default: true 
+			},
+			cancelBtn:{
+				type: Boolean,
+				default: true 
+			},
+			cancelText:{
+				type: String,
+				default:'取消'
+			},
+			sureBtn:{
+				type: Boolean,
+				default: true 
+			},
+			sureText:{
+				type: String,
+				default:'确定'
+			},
+			theme:[]
 		},
 		data() {
 			return {
-				cancelText:'取消',
-				okText:'确定',
-				closeBtn: false,
-				okLoader: false,
-				theme: ''
+				okLoader:false
 			}
 		},
 		methods:{
+			open(){},
 			sure(){
 				this.okLoader = true;
 				this.$emit('onok');
@@ -76,9 +94,14 @@
 			close(){
 				this.show = false;
 			},
-			iconClose(){
+			beforeClose(){
 				if(this.okLoader) return;
 				this.$emit('onclose');
+			},
+			afterClose(vm){
+				this.$nextTick(()=>{
+					vm.$el.remove && vm.$el.remove();
+				})
 			}
 		}
 	}

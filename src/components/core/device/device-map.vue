@@ -18,6 +18,9 @@
 				background: no-repeat url('~@/assets/icon_current.png') transparent;
 				background-size: 100% 100%;
 				background-position: center top;
+				&.gray{
+					filter: grayscale(1);
+				}
 			}
 		}
 	}
@@ -80,7 +83,7 @@
 			position: absolute;
 			top: 50%;
 			right: 100%;
-			transform-origin:100% 50%;
+			transform-origin: 100% 50%;
 			transform: translateY(-50%) scale(0, 1);
 			z-index: 2;
 			background-color: #384959;
@@ -182,18 +185,18 @@
 		.info-list {
 			width: 100%;
 			.info-li {
-				@include flexLayout(flex, normal, center);
+				@include flexLayout(flex, normal, normal);
 				padding: 4px 0;
 				.name {
 					font-size: 1.4rem;
 					color: map-get($color, A100);
+					flex: 0 0 auto;
 				}
 				.value {
 					font-size: 1.4rem;
 					color: map-get($color, 600);
-					-webkit-box-flex: 1;
-					-ms-flex: 1 0 auto;
-					flex: 1 0 auto;
+					word-break: break-all;
+					white-space: normal;
 				}
 			}
 		}
@@ -208,7 +211,6 @@
 			<device-time @search-time="onSearch"></device-time>
 			<div class="hover-tip">历史轨迹查询</div>
 		</div> -->
-
 		<el-tooltip content="历史轨迹查询" placement="left" :enterable="false">
 			<div class="device-map-search">
 				<device-time @search-time="onSearch"></device-time>
@@ -232,14 +234,9 @@
 					<i class="iconfont icon-weizhi"></i>
 					<div class="hover-tip">安全箱当前位置</div>
 				</ask-button> -->
-				<el-tooltip content="离位报警轨迹" placement="left" :enterable="false">
-					<ask-button @ask-click="onClick('yellow')">
-						<i class="iconimg icon-displacement"></i>
-					</ask-button>
-				</el-tooltip>
-				<el-tooltip content="布防报警位置" placement="left" :enterable="false">
-					<ask-button @ask-click="onClick('red')">
-						<i class="iconfont icon-dunpai1"></i>
+				<el-tooltip content="安全箱当前位置" placement="left" :enterable="false">
+					<ask-button @ask-click="onClick('now')">
+						<i class="iconfont icon-weizhi"></i>
 					</ask-button>
 				</el-tooltip>
 				<el-tooltip content="开箱的位置点" placement="left" :enterable="false">
@@ -247,9 +244,14 @@
 						<i class="iconfont icon-xiangzi"></i>
 					</ask-button>
 				</el-tooltip>
-				<el-tooltip content="安全箱当前位置" placement="left" :enterable="false">
-					<ask-button @ask-click="onClick('now')">
-						<i class="iconfont icon-weizhi"></i>
+				<el-tooltip content="布防报警位置" placement="left" :enterable="false">
+					<ask-button @ask-click="onClick('red')">
+						<i class="iconfont icon-dunpai1"></i>
+					</ask-button>
+				</el-tooltip>
+				<el-tooltip content="离位报警轨迹" placement="left" :enterable="false">
+					<ask-button @ask-click="onClick('yellow')">
+						<i class="iconimg icon-displacement"></i>
 					</ask-button>
 				</el-tooltip>
 			</div>
@@ -257,18 +259,20 @@
 	</div>
 </template>
 <script>
-import { AMapLoad } from '@/utils';
+import { AMapLoad,WGS2GCJ,askDialogToast } from '@/utils';
+import moment from 'moment/moment.js';
 import { MAPKEY, MAPCENTER } from '@/config.js';
 import { Device } from '@/services';
 import deviceTime from './device-time.vue';
 let MARKER_ALL = 0,
 	MARKER_GREEN = 1,
 	MARKER_RED = 2,
-	MARKER_YELLOW = 3;
+	MARKER_YELLOW = 3,
+	MARKER_ABNORMAL = 4;
 export default {
 	name: "DeviceMap",
-	inject: ['rootMain'],
-	props:['info'],
+	inject: ['rootMain', 'rootHome'],
+	props: ['info'],
 	components: {
 		"device-time": deviceTime
 	},
@@ -277,33 +281,70 @@ export default {
 			AMap: null,
 			map: null,
 			deviceServer: new Device(),
+			handleDeviceAbnormalIsAgin: false,
 			line: [],
 			renderLine: [],
 			markers: [],
+			circles: [],
 			polyline: ''
 		}
 	},
 	async mounted() {
 		await this.initAmap();
-		this.currentPostion();
+		if (this.rootHome.deviceAbnormalState) {
+			// console.log('处理异常mounte')
+			this.handleDeviceAbnormal();
+		} else {
+			this.currentPostion();
+		}
+
 	},
 
-	watch:{
-		info:{
-			handler:function(n,o){
-			},
-			deep:true
+	watch: {
+		info: {
+			handler: function(n, o) {},
+			deep: true
 		},
 		'$route' (to, from) {
-			if(to.name == 'homeInfo'){
-				if( this.AMap != null ){
-					this.currentPostion();
+			if (to.name == 'homeInfo') {
+				if (this.AMap != null) {
+					this.line = [];
+					if (this.rootHome.deviceAbnormalState) {
+						// console.log('处理异常route')
+						this.handleDeviceAbnormal();
+					} else {
+						this.currentPostion();
+					}
+				}
+			}
+		},
+		'rootHome.deviceAbnormalState' (n, o) {
+			if (n) {
+				if (this.AMap != null) {
+					if (this.rootHome.deviceAbnormalState) {
+						// console.log('处理异常root')
+						this.handleDeviceAbnormal();
+					} else {
+						this.currentPostion();
+					}
 				}
 			}
 		}
 	},
+	destroyed() {
+		this.$nextTick(() => {
+			this.removeMapMulch();
+			/*if (this.handleDeviceAbnormalIsAgin) {
+				this.rootHome.setDeviceAbnormal(false);
+			}*/
+		})
+	},
 	methods: {
 		onClick(type) {
+			if (!this.$route.params.imei) {
+				askDialogToast({msg:`请先选择安全箱`,time:2000,class:'danger'});
+				return;
+			}
 			if (type == 'now') {
 				this.currentPostion()
 			}
@@ -322,7 +363,12 @@ export default {
 				this.AMap = AMap;
 				this.map = new AMap.Map('device_map_container', {
 					center: MAPCENTER,
-					zoom: 18
+					zoom: 12
+				})
+				AMap.plugin(['AMap.Scale'],()=>{
+				    //创建并添加工具条控件
+				    let scale = new AMap.Scale();
+				    this.map.addControl(scale);
 				})
 			}, error => {
 				console.log(error);
@@ -343,23 +389,117 @@ export default {
 				auth: this.$user.auth,
 				imei: this.$route.params.imei
 			}).then(r => {
-				if(!r.data.data) return;
+				this.removeMapMulch();
+				if (!r.data.data) return;
 				// this.rootMain.loader(false);
-				this.setMapMarker(r.data.data.lng, r.data.data.lat);
+				if (parseInt(r.data.data.lng, 10) == 0 && parseInt(r.data.data.lat, 10) == 0) {
+					return;
+				}
+				this.setMapMarker(r.data.data);
 			}, error => {
 				// this.rootMain.loader(false);
 			})
 		},
-		setMapMarker(lng, lat) {
+		handleDeviceAbnormal() {
+			this.rootMain.loader(true);
+			this.deviceServer.getAbnormal({
+				auth: this.$user.auth,
+				imei: this.$route.params.imei
+			}).then(r => {
+				this.rootMain.loader(false);
+				if (!r.data.data || r.data.data.length == 0) {
+					askDialogToast({msg:r.data.message? r.data.message:`未查询到数据`,time:2000,class:'danger'});
+					return;
+				}
+				this.removeMapMulch();
+				this.line = [];
+				r.data.data.map(index => {
+					this.line.push(index);
+					this.renderLine.push(index);
+				})
+				this.mapAbnormalRenderLine(MARKER_ABNORMAL);
+				this.rootHome.refreshDevice();
+				// this.rootHome.setDeviceAbnormal(false);
+			}, error => {
+				this.rootMain.loader(false);
+
+			})
+		},
+		mapAbnormalRenderLine(type) {
+			if (type !== MARKER_ABNORMAL) return;
+			if (this.renderLine.length == 0) return;
+			this.handleDeviceAbnormalIsAgin = true;
+			this.renderLine.map(index => {
+				let markeIcon = '';
+				let windowType = '';
+				if (index.dislocation_status == 2) { //离位
+					markeIcon = 'displacement';
+					windowType = MARKER_YELLOW;
+				}
+				if (index.place_status == 2) { //布防
+					markeIcon = 'protection';
+					windowType = MARKER_RED;
+				}
+				if (index.open == 1) { //开箱
+					markeIcon = 'box';
+					windowType = MARKER_GREEN;
+				}
+				let _pos = WGS2GCJ( index.lat,index.lng);
+				let marker = new this.AMap.Marker({
+					map: this.map,
+					position: [_pos.lng, _pos.lat],
+					offset: new this.AMap.Pixel(-20, -68),
+					content: `<div class="search-position">
+										<i class="iconimg ${markeIcon}"></i>
+									  </div>`
+				});
+				let circle = new this.AMap.Circle({
+					center: new this.AMap.LngLat(_pos.lng, _pos.lat), // 圆心位置
+					radius: index.location_radius || 0, //半径
+					strokeColor: "#F33", //线颜色
+					strokeOpacity: .8, //线透明度
+					strokeWeight: 1, //线粗细度
+					fillColor: "#ee2200", //填充颜色
+					fillOpacity: .25 //填充透明度
+
+				});
+				let infoWindow = new this.AMap.InfoWindow({
+					isCustom: true, //使用自定义窗体
+					content: this.buildWindow(index,windowType),
+					offset: new this.AMap.Pixel(16, -92)
+				});
+				this.AMap.event.addListener(marker, 'click', () => {
+					infoWindow.open(this.map, marker.getPosition());
+				});
+				marker.on('mouseover', () => {
+					circle.setMap(this.map);
+				})
+				marker.on('mouseout', () => {
+					this.map.remove(circle)
+				})
+				this.circles.push(circle);
+				this.markers.push(marker);
+			});
+			this.map.setFitView();
+		},
+		setMapMarker(data) {
 			if (this.map == null) return;
-			this.removeMapMulch();
+			let _pos = WGS2GCJ(data.lat,data.lng);
 			let marker = new this.AMap.Marker({
 				map: this.map,
-				position: [lng, lat],
+				position: [_pos.lng, _pos.lat],
 				offset: new this.AMap.Pixel(-20, -68),
 				content: `<div class="position-marker">
-							  <div class="icon position"></div>
+							  <div class="icon position ${this.info.online ? '':'gray'}" ></div>
 						</div>`
+			});
+			let infoWindow = new this.AMap.InfoWindow({
+				isCustom: true, //使用自定义窗体
+				content: this.buildWindow(data,MARKER_ALL),
+				offset: new this.AMap.Pixel(16, -92)
+			});
+			this.AMap.event.addListener(marker, 'click', () => {
+				infoWindow.open(this.map, marker.getPosition());
 			});
 			this.markers.push(marker);
 			this.map.setFitView();
@@ -367,26 +507,29 @@ export default {
 		//移除地图上的覆盖物
 		removeMapMulch() {
 			this.map.remove(this.markers);
+			this.map.remove(this.circles);
 			this.map.remove(this.polyline);
 			this.map.clearInfoWindow();
 			this.markers = [];
+			this.circles = [];
 			this.polyline = '';
 			this.renderLine = [];
 		},
 		mapRenderLine(type) {
-			if(this.renderLine.length == 0) return;
+			if (this.renderLine.length == 0) return;
 			let markeIcon = '';
 			if (type === MARKER_GREEN) markeIcon = 'box';
 			if (type === MARKER_RED) markeIcon = 'protection';
 			if (type === MARKER_YELLOW) markeIcon = 'displacement';
 			let lineArr = [];
 			this.renderLine.map(index => {
-				if(index.lng == null || index.lat == null) return;
+				if (index.lng == null || index.lat == null) return;
 				let marker = null;
+				let _pos = WGS2GCJ( index.lat,index.lng);
 				if (type === MARKER_ALL) {
 					marker = new this.AMap.Marker({
 						map: this.map,
-						position: [index.lng, index.lat],
+						position: [_pos.lng, _pos.lat],
 						offset: new this.AMap.Pixel(-15, -32),
 						content: `<div class="search-position">
 									<i class="iconfont icon-dingwei"></i>
@@ -395,7 +538,7 @@ export default {
 				} else {
 					marker = new this.AMap.Marker({
 						map: this.map,
-						position: [index.lng, index.lat],
+						position: [_pos.lng, _pos.lat],
 						offset: new this.AMap.Pixel(-20, -68),
 						content: `<div class="search-position">
 									<i class="iconimg ${markeIcon}"></i>
@@ -404,7 +547,7 @@ export default {
 				}
 
 				let circle = new this.AMap.Circle({
-					center: new this.AMap.LngLat(index.lng, index.lat), // 圆心位置
+					center: new this.AMap.LngLat(_pos.lng, _pos.lat), // 圆心位置
 					radius: index.location_radius || 0, //半径
 					strokeColor: "#F33", //线颜色
 					strokeOpacity: .8, //线透明度
@@ -417,13 +560,13 @@ export default {
 				if (type === MARKER_ALL) {
 					infoWindow = new this.AMap.InfoWindow({
 						isCustom: true, //使用自定义窗体
-						content: this.buildWindow(index),
+						content: this.buildWindow(index,type),
 						offset: new this.AMap.Pixel(16, -54)
 					});
 				} else {
 					infoWindow = new this.AMap.InfoWindow({
 						isCustom: true, //使用自定义窗体
-						content: this.buildWindow(index),
+						content: this.buildWindow(index,type),
 						offset: new this.AMap.Pixel(16, -92)
 					});
 				}
@@ -436,11 +579,14 @@ export default {
 				marker.on('mouseout', () => {
 					this.map.remove(circle)
 				})
-				lineArr.push([index.lng, index.lat]);
+				if (type !== MARKER_ABNORMAL &&　!this.handleDeviceAbnormalIsAgin) {
+					lineArr.push([_pos.lng, _pos.lat]);
+				}
+				this.circles.push(circle);
 				this.markers.push(marker);
 			})
 			this.map.setFitView();
-			if(lineArr.length == 0) return;
+			if (lineArr.length == 0) return;
 			this.polyline = new this.AMap.Polyline({
 				path: lineArr, // 设置线覆盖物路径
 				isOutline: true, //是否描边
@@ -456,12 +602,12 @@ export default {
 			});
 			this.polyline.setMap(this.map);
 		},
-		buildWindow(index) {
+		buildWindow(index,type) {
 			let info = document.createElement("div");
 			info.className = "location-info";
 			let data = [{
 				name: '时间',
-				value: '2017-05-06 14:14'
+				value: moment.unix(index.created_at).format("YYYY-MM-DD HH:mm")
 			}, {
 				name: '经纬度',
 				value: index.lng + ',' + index.lat
@@ -470,13 +616,13 @@ export default {
 				value: index.speed + 'km/s'
 			}, {
 				name: '状态',
-				value: this.buildState(index)
+				value: this.buildState(index,type)
 			}, {
 				name: '定位方式',
-				value: '基站定位'
+				value: index.location_type == 1 ? 'GPS定位':'基站定位'
 			}, {
 				name: '误差范围',
-				value: (index.location_radius || 0) +'米'
+				value: (index.location_radius || 0) + '米'
 			}]
 
 			let bodys = document.createElement("ul");
@@ -503,23 +649,47 @@ export default {
 			}
 			return info;
 		},
-		buildState(index) {
+		buildState(index,type) {
 			let _text = '正常';
-			if (index.dislocation_status == 2) {
-				_text = '离位报警';
+
+			if (type === MARKER_GREEN && index.open == 1) {
+				_text = '开箱';
 				return _text;
 			}
-			if (index.place_status == 2) {
+			if (type === MARKER_RED && index.place_status == 2) {
 				_text = '布防报警';
 				return _text;
 			}
-			if (index.open == 1) {
-				_text = '开箱';
+			if (type === MARKER_YELLOW && index.dislocation_status == 2) {
+				_text = '离位报警';
+				return _text;
+			}
+
+			if(type === MARKER_ALL || type === MARKER_ABNORMAL){
+				let _all = [];
+				if(index.open == 1){
+					_all.push('开箱');
+				}
+				if(index.place_status == 2){
+					_all.push('布防报警');
+				}
+				if(index.dislocation_status == 2){
+					_all.push('离位报警');
+				}
+				if(_all.length > 0){
+					_text = _all.join('、');
+				}
 				return _text;
 			}
 			return _text;
 		},
 		onSearch(time) {
+			if (!this.$route.params.imei) {
+				askDialogToast({msg:`请先选择安全箱`,time:2000,class:'danger'});
+				return;
+			}
+			this.handleDeviceAbnormalIsAgin = false;
+			this.line = [];
 			this.removeMapMulch();
 			this.rootMain.loader(true);
 			let option = {
@@ -530,8 +700,10 @@ export default {
 			};
 			this.deviceServer.searchPosition(option).then(r => {
 				this.rootMain.loader(false);
-				if(!r.data.data||r.data.data.length == 0) return;
-				this.line = [];
+				if (!r.data.data || r.data.data.length == 0) {
+					askDialogToast({msg:r.data.message? r.data.message:`未查询到数据`,time:2000,class:'danger'});
+					return;
+				}
 				r.data.data.map(index => {
 					this.line.push(index);
 					this.renderLine.push(index);
@@ -542,21 +714,45 @@ export default {
 			})
 		},
 		filterYellow() {
-			if (this.line.length <= 0) return;
+			if (this.line.length <= 0) {
+				askDialogToast({msg:'未查询到数据',time:2000,class:'danger'});
+				return;
+			}
+			let _renderLine = this.line.filter(index => index.dislocation_status == 2);
+			if(_renderLine.length <= 0){
+				askDialogToast({msg:'未查询到数据',time:2000,class:'danger'});
+				return;
+			}
 			this.removeMapMulch();
-			this.renderLine = this.line.filter(index => index.dislocation_status == 2);
+			this.renderLine = _renderLine;
 			this.mapRenderLine(MARKER_YELLOW);
 		},
 		filterRed() {
-			if (this.line.length <= 0) return;
+			if (this.line.length <= 0) {
+				askDialogToast({msg:'未查询到数据',time:2000,class:'danger'});
+				return;
+			}
+			let _renderLine = this.line.filter(index => index.place_status == 2);
+			if(_renderLine.length <= 0){
+				askDialogToast({msg:'未查询到数据',time:2000,class:'danger'});
+				return;
+			}
 			this.removeMapMulch();
-			this.renderLine = this.line.filter(index => index.place_status == 2);
+			this.renderLine = _renderLine;
 			this.mapRenderLine(MARKER_RED);
 		},
 		filterGreen() {
-			if (this.line.length <= 0) return;
+			if (this.line.length <= 0) {
+				askDialogToast({msg:'未查询到数据',time:2000,class:'danger'});
+				return;
+			}
+			let _renderLine = this.line.filter(index => index.open == 1);
+			if(_renderLine.length <= 0){
+				askDialogToast({msg:'未查询到数据',time:2000,class:'danger'});
+				return;
+			}
 			this.removeMapMulch();
-			this.renderLine = this.line.filter(index => index.open == 1);
+			this.renderLine = _renderLine;
 			this.mapRenderLine(MARKER_GREEN);
 		}
 	}

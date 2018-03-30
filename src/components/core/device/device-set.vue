@@ -124,10 +124,47 @@
 		opacity: 0;
 	}
 }
+
+/* 进入过渡的状态 */
+.soft-pro-modal-fly-enter-active{
+	transform-origin: 50% 100%;
+    animation: soft-pro-modal-fly-enter .3s ease 1 both;
+}
+@keyframes soft-pro-modal-fly-enter{
+	0%{
+		transform: translate3d(100%,0,0) skewX(30deg);
+		opacity: 0;
+	}
+	80%{
+		opacity: 1;
+	}
+	100%{
+		transform: translate3d(0,0,0) skewX(0deg);
+		opacity: 1;
+	}
+}
+/* 离开过渡的状态 */
+.soft-pro-modal-fly-leave-active{
+	transform-origin: 50% 100%;
+    animation: soft-pro-modal-fly-leave .3s cubic-bezier(1.0, 0.5, 0.8, 1.0) 1 both;
+}
+@keyframes soft-pro-modal-fly-leave{
+	0%{
+		transform: translate3d(0,0,0) skewX(0deg);
+		opacity: 1;
+	}
+	80%{
+		opacity: 1;
+	}
+	100%{
+		transform: translate3d(-100%,0,0) skewX(-30deg);
+		opacity: 0;
+	}
+}
 </style>
 <template>
 	<div class="device-set">
-		<div class="title">{{info.name}}</div>
+		<div class="title">安全箱:"{{info.name}}"</div>
 		<div class="caption">操作栏</div>
 		<el-menu class="device-set-menu" 
 				@open="handleOpen" 
@@ -259,22 +296,28 @@
 					</ul>
 				</el-menu-item-group>
 			</el-submenu>
-
-			<el-submenu index="4">
-				<template slot="title">
-					<span>管理人</span>
-				</template>
-				<el-menu-item-group>
-					<ul class="ds-list">
-						<li class="ds-once is-click" :class="{'active':userInfoActive == 1}" @click="onOnceClick(1)">
-							<div class="ds-otitle">管理人信息</div>
-						</li>
-						<li class="ds-once is-click" :class="{'active':userInfoActive == 2}" @click="onOnceClick(2)">
-							<div class="ds-otitle">添加用户</div>
-						</li>
-					</ul>
-				</el-menu-item-group>
-			</el-submenu>
+			<template v-if="$isPro">
+				<el-submenu index="4">
+					<template slot="title">
+						<span>管理人</span>
+					</template>
+					<el-menu-item-group>
+						<ul class="ds-list">
+							<li class="ds-once is-click" :class="{'active':userInfoActive == 1}" @click="onOnceClick(1)">
+								<div class="ds-otitle">管理人信息</div>
+							</li>
+							<li class="ds-once is-click" :class="{'active':userInfoActive == 2}" @click="onOnceClick(2)">
+								<div class="ds-otitle">添加用户</div>
+							</li>
+						</ul>
+					</el-menu-item-group>
+				</el-submenu>
+			</template>
+			<template v-else>
+				<el-menu-item index="4" @click="onOnceClick(1)">
+			        <span slot="title">管理人</span>
+		        </el-menu-item>
+			</template>
 			<el-menu-item index="5" @click="clickRecord">
 		        <span slot="title">操作记录</span>
 	        </el-menu-item>
@@ -327,7 +370,7 @@ import {
 } from '../set-popup';
 
 import { DeviceSet,Device } from '@/services';
-import {askDialogToast} from '@/utils';
+import {askDialogToast,merge} from '@/utils';
 export default {
 	name: "DeviceSet",
 	props: ['info'],
@@ -339,6 +382,7 @@ export default {
 	},
 	data(){
 		return{
+			modalShow:false,
 			userInfoActive: 0,
 			inlineLoaderShow: true,
 			isManualLock: false, //手动锁定
@@ -415,7 +459,7 @@ export default {
 						return;
 					}
 					this.inlineLoaderShow = false;
-					this.positionInterval = this.buildInterval(r.data.data.set01);
+					this.positionInterval = this.buildInterval(r.data.data.set01,'position');
 					this.policeInterval = this.buildInterval(r.data.data.set02);
 				}, 500);
 			})
@@ -517,28 +561,33 @@ export default {
 				this.rootMain.loader(false);
 			})
 		},
-		buildInterval(val){
+		buildInterval(val,type){
 			let item = [{
 					name: '低',
 					value: '03',
-					tip:"5分钟",
+					tip:"2分钟",
 					checked: false
 				},
 				{
 					name: '中',
 					value: '02',
-					tip:"30分钟",
+					tip:"5分钟",
 					checked: false
 				},
 				{
 					name: '高',
 					value: '01',
-					tip:"1小时",
+					tip:"10分钟",
 					checked: false
 				}
 			];
-			item = item.map(index=>{
+			item = item.map((index,key)=>{
 				if(index.value == val) index.checked = true;
+				if(type == 'position'){
+					if(key == 0) index.tip = "5分钟";
+					if(key == 1) index.tip = "30分钟";
+					if(key == 2) index.tip = "1小时";
+				}
 				return index;
 			})
 			return item;

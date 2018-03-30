@@ -79,7 +79,7 @@
 			<div class="user-box">
 				<i class="iconfont icon-zhanghao"></i>
 				<div class="info">
-					<span>账号</span>
+					<!-- <span>&nbsp;账号</span> -->
 					<span>{{$user && $user.name}}</span>
 				</div>
 			</div>

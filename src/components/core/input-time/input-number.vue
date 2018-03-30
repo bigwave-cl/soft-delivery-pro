@@ -66,6 +66,7 @@ import { handlerSingleDigit } from '@/utils';
 		},
 		methods:{
 			onClick(type){
+				this.calcVal = this.val;
 				if(type == 'add'){
 					this.calcVal++;
 					if(this.max != null){
@@ -78,7 +79,10 @@ import { handlerSingleDigit } from '@/utils';
 						this.calcVal = Math.max(this.min,this.calcVal);
 					}
 				}
-				this.$emit('number-change',this.calcVal,this.type);
+				this.$emit('number-change',this.calcVal,this.type,type);
+				this.$nextTick(()=>{
+					this.calcVal = this.val;
+				})
 			}
 		},
 		watch: {
