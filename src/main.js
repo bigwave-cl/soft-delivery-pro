@@ -2,11 +2,11 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
 import App from './App'
-import ElementUI from 'element-ui'
-import 'element-ui/lib/theme-chalk/index.css'
+
 import router from './router'
 import ASKComponents from './components/ask';
 import './router/router.auth.js';
+import './utils/element-components.js';
 import VeeValidate from 'vee-validate'
 
 Vue.config.keyCodes = {
@@ -18,7 +18,6 @@ Vue.prototype.$isPro = false; //是否是专业版 true=>是，false=>否
 Vue.config.productionTip = false
 Vue.use(ASKComponents);
 Vue.use(VeeValidate);
-Vue.use(ElementUI);
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
