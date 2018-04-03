@@ -64,9 +64,9 @@ export default {
 						this.rootMain.loader(false);
 						this.$nextTick(()=>{
 							if (this.$route.query.redirect) {
-								this.$router.push({ path: this.$route.query.redirect })
+								this.$router.replace({ path: this.$route.query.redirect })
 							} else {
-								this.$router.push({ name: 'home' });
+								this.$router.replace({ name: 'home' });
 							}
 						});
 					},error=>{

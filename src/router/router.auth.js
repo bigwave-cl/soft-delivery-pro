@@ -23,12 +23,14 @@ const beforeEach = (to, from, next) => {
 	if(to.path == '/login' && user.auth != 'none'){
 		refreshTitle('安全递送');
 		next({
+			replace: true,
 			path: '/'
 		});
 	}else{
 		if(to.meta.requiresAuth && user.auth == 'none'){
 			next({
 				path: '/login',
+				replace: true,
 				query: { redirect: to.fullPath }
 			});
 		}else{
