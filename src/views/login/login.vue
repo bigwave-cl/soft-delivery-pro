@@ -24,7 +24,7 @@
 					<div class="ask-text-box">
 						<div class="checkbox">
 							<input type="checkbox" id="remember" v-model="model.remember">
-							<label for="remember">记住密码</label>
+							<label for="remember">记住密码(账号密码随便输入)</label>
 						</div>
 					</div>
 					<div class="ask-button-box">
