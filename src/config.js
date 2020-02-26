@@ -5,7 +5,7 @@ let config = {
 		let _r = this.el.getAttribute('data-api');
 		if (this.isLocal) {
 			_r = 'http://localhost:8046/api';
-			_r = 'http://www.askmewhy.cn/soft-delivery/api/';
+			_r = 'https://www.askmewhy.cn/soft-delivery/api/';
 			// _r = 'http://box.bocaihd.com/page/web-app/api';
 			// _r = 'http://box.linkvalue.com.cn/page/web-app/api';
 			/*{
